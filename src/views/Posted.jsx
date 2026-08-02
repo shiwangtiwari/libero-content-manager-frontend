@@ -1,165 +1,142 @@
-import React, { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { getPosted } from '../api/client.js'
 
-const s = {
-  page: { padding: '16px 16px 100px' },
-  title: { fontSize: '20px', fontWeight: '700', color: '#f0f0f0', marginBottom: '16px' },
-  card: {
-    background: '#161616',
-    border: '1px solid #252525',
-    borderRadius: '14px',
-    padding: '16px',
-    marginBottom: '12px',
-  },
-  topRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '10px',
-  },
-  badge: {
-    background: '#14532d',
-    color: '#4ade80',
-    fontSize: '11px',
-    fontWeight: '700',
-    padding: '3px 10px',
-    borderRadius: '20px',
-  },
-  time: { fontSize: '12px', color: '#6b7280' },
-  content: {
-    fontSize: '14px',
-    color: '#e5e7eb',
-    lineHeight: '1.6',
-    whiteSpace: 'pre-wrap',
-    wordBreak: 'break-word',
-    marginBottom: '12px',
-  },
-  image: {
-    width: '100%',
-    borderRadius: '8px',
-    objectFit: 'cover',
-    marginBottom: '12px',
-  },
-  metrics: {
-    display: 'flex',
-    gap: '16px',
-    flexWrap: 'wrap',
-    marginBottom: '10px',
-  },
-  metric: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  metricValue: {
-    fontSize: '18px',
-    fontWeight: '700',
-    color: '#f0f0f0',
-  },
-  metricLabel: {
-    fontSize: '11px',
-    color: '#6b7280',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-  },
-  link: { color: '#60a5fa', fontSize: '13px', textDecoration: 'none' },
-  empty: {
-    textAlign: 'center',
-    color: '#4b5563',
-    padding: '60px 20px',
-    fontSize: '15px',
-  },
-  genBadge: (gen) => ({
-    display: 'inline-block',
-    background: gen === 'chatgpt' ? '#065f46' : gen === 'gemini' ? '#1e3a5f' : '#1f2937',
-    color: gen === 'chatgpt' ? '#34d399' : gen === 'gemini' ? '#60a5fa' : '#6b7280',
-    fontSize: '11px',
-    padding: '2px 8px',
-    borderRadius: '4px',
-    fontWeight: '600',
-    marginBottom: '8px',
-  }),
-}
-
-function MetricBox({ value, label }) {
-  return (
-    <div style={s.metric}>
-      <span style={s.metricValue}>{value ?? '—'}</span>
-      <span style={s.metricLabel}>{label}</span>
-    </div>
-  )
+function humanTime(isoStr) {
+  if (!isoStr) return '—'
+  try {
+    const [datePart, timePart] = isoStr.split(' ')
+    const date = new Date(datePart + 'T' + (timePart || '00:00') + ':00+05:30')
+    return date.toLocaleDateString('en-IN', {
+      weekday: 'long', day: 'numeric', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: true,
+      timeZone: 'Asia/Kolkata',
+    })
+  } catch { return isoStr }
 }
 
 export default function Posted() {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     getPosted()
-      .then(setPosts)
-      .catch(console.error)
-      .finally(() => setLoading(false))
+      .then(data => { setPosts(data); setLoading(false) })
+      .catch(() => { setError('Could not load posted history.'); setLoading(false) })
   }, [])
 
-  if (loading) return <div style={{ ...s.page, color: '#4b5563', paddingTop: '40px', textAlign: 'center' }}>Loading…</div>
-
   return (
-    <div style={s.page}>
-      <h1 style={s.title}>Posted</h1>
+    <>
+      <style>{`
+        .posted-header {
+          font-size: 13px;
+          font-weight: 600;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--text3);
+          margin-bottom: 16px;
+          padding-top: 8px;
+        }
+        .posted-card {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          padding: 16px;
+          margin-bottom: 12px;
+        }
+        .posted-meta {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 10px;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+        .posted-time {
+          font-size: 12px;
+          color: var(--text3);
+        }
+        .posted-content {
+          font-size: 15px;
+          line-height: 1.65;
+          color: var(--text);
+          white-space: pre-wrap;
+          word-break: break-word;
+          display: -webkit-box;
+          -webkit-line-clamp: 4;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          margin-bottom: 12px;
+        }
+        .posted-generator {
+          font-size: 11px;
+          color: var(--text3);
+          font-family: var(--mono);
+        }
+        .posted-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          color: var(--accent2);
+          font-size: 13px;
+          font-weight: 600;
+          text-decoration: none;
+          margin-top: 8px;
+        }
+        .posted-link:hover { text-decoration: underline; }
+      `}</style>
 
-      {posts.length === 0 ? (
-        <div style={s.empty}>No posts published yet.</div>
-      ) : (
-        posts.map((post) => {
-          const m = post.posted_metrics?.[0] || {}
-          const postedDate = post.posted_time
-            ? new Date(post.posted_time).toLocaleString('en-IN', {
-                day: 'numeric', month: 'short', year: 'numeric',
-                hour: '2-digit', minute: '2-digit',
-              })
-            : null
+      <div className="posted-header">Posted</div>
 
-          return (
-            <div key={post.id} style={s.card}>
-              <div style={s.topRow}>
-                <span style={s.badge}>Posted</span>
-                {postedDate && <span style={s.time}>{postedDate}</span>}
-              </div>
+      {loading && <div className="spinner" />}
 
-              {post.image_url && (
-                <img src={post.image_url} alt="Post visual" style={s.image} />
-              )}
-
-              {post.image_generator && post.image_generator !== 'none' && (
-                <div style={s.genBadge(post.image_generator)}>
-                  via {post.image_generator}
-                </div>
-              )}
-
-              <div style={s.content}>{(post.content || '').slice(0, 300)}{post.content?.length > 300 ? '…' : ''}</div>
-
-              <div style={s.metrics}>
-                <MetricBox value={m.impressions} label="Views" />
-                <MetricBox value={m.likes} label="Likes" />
-                <MetricBox value={m.comments} label="Comments" />
-                <MetricBox value={m.shares} label="Shares" />
-                <MetricBox value={m.clicks} label="Clicks" />
-              </div>
-
-              {post.linkedin_post_id && (
-                <a
-                  style={s.link}
-                  href={`https://www.linkedin.com/feed/update/${post.linkedin_post_id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View on LinkedIn →
-                </a>
-              )}
-            </div>
-          )
-        })
+      {error && (
+        <div className="card" style={{ borderColor: 'var(--red)', color: 'var(--red)' }}>
+          {error}
+        </div>
       )}
-    </div>
+
+      {!loading && !error && posts.length === 0 && (
+        <div className="empty">
+          <div className="empty-icon">📊</div>
+          <div className="empty-text">No posts yet</div>
+          <div className="empty-sub">Your published posts will appear here</div>
+        </div>
+      )}
+
+      {posts.map(post => (
+        <div key={post.id} className="posted-card">
+          <div className="posted-meta">
+            <span className="badge badge-posted">Posted</span>
+            <span className="posted-time">{humanTime(post.posted_time)}</span>
+          </div>
+          <div className="posted-content">{post.content}</div>
+          <hr className="divider" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <span className="posted-generator">
+              {post.image_generator ? `Image: ${post.image_generator}` : 'No image'}
+            </span>
+            {post.linkedin_post_id && (
+              <a
+                className="posted-link"
+                href={`https://www.linkedin.com/feed/update/${post.linkedin_post_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View on LinkedIn
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M15 3h6v6" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M10 14L21 3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </a>
+            )}
+          </div>
+          <div className="posted-generator" style={{ marginTop: 4, fontFamily: 'var(--mono)' }}>
+            {post.id?.slice(0, 8)}
+          </div>
+        </div>
+      ))}
+    </>
   )
 }
