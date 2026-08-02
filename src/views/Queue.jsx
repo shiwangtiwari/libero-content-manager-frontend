@@ -1,103 +1,115 @@
-import React, { useEffect, useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import PostCard from '../components/PostCard.jsx'
-import { getQueue } from '../api/client.js'
-
-const s = {
-  page: { padding: '16px 16px 100px' },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '16px',
-  },
-  title: { fontSize: '20px', fontWeight: '700', color: '#f0f0f0' },
-  count: {
-    fontSize: '13px',
-    color: '#6b7280',
-    background: '#1f2937',
-    padding: '3px 10px',
-    borderRadius: '20px',
-  },
-  empty: {
-    textAlign: 'center',
-    color: '#4b5563',
-    padding: '60px 20px',
-    fontSize: '15px',
-    lineHeight: '1.6',
-  },
-  refreshBtn: {
-    background: 'none',
-    border: '1px solid #333',
-    color: '#6b7280',
-    padding: '6px 12px',
-    borderRadius: '8px',
-    fontSize: '13px',
-    cursor: 'pointer',
-    minHeight: '36px',
-  },
-  loading: {
-    textAlign: 'center',
-    color: '#4b5563',
-    padding: '40px',
-  },
-  error: {
-    background: '#4b1111',
-    border: '1px solid #dc2626',
-    borderRadius: '10px',
-    padding: '12px 16px',
-    color: '#f87171',
-    fontSize: '13px',
-    marginBottom: '12px',
-  },
-}
+import { getQueue, runPipelineNow } from '../api/client.js'
 
 export default function Queue() {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [triggering, setTriggering] = useState(false)
+  const [toast, setToast] = useState(null)
 
-  const load = async () => {
-    setLoading(true)
-    setError(null)
+  const showToast = (msg) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  const fetchQueue = useCallback(async () => {
     try {
       const data = await getQueue()
       setPosts(data)
-    } catch (e) {
-      setError('Could not load queue. Check backend connection.')
-      console.error(e)
+      setError(null)
+    } catch {
+      setError('Could not load queue. Is Railway running?')
     } finally {
       setLoading(false)
     }
+  }, [])
+
+  useEffect(() => { fetchQueue() }, [fetchQueue])
+
+  const handleTrigger = async () => {
+    setTriggering(true)
+    try {
+      await runPipelineNow()
+      showToast('⚙️ Pipeline triggered — draft arriving in ~30s')
+    } catch {
+      showToast('❌ Failed to trigger pipeline')
+    } finally {
+      setTriggering(false)
+    }
   }
 
-  useEffect(() => { load() }, [])
-
   return (
-    <div style={s.page}>
-      <div style={s.header}>
-        <h1 style={s.title}>Queue</h1>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {!loading && <span style={s.count}>{posts.length}</span>}
-          <button style={s.refreshBtn} onClick={load}>Refresh</button>
+    <>
+      <style>{`
+        .queue-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 16px;
+          padding-top: 8px;
+        }
+        .queue-title {
+          font-size: 13px;
+          font-weight: 600;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--text3);
+        }
+        .queue-count {
+          font-family: var(--mono);
+          font-size: 12px;
+          color: var(--text3);
+          background: var(--surface2);
+          padding: 2px 8px;
+          border-radius: 99px;
+        }
+        .trigger-btn {
+          font-size: 13px;
+          padding: 0 12px;
+          height: 36px;
+          min-height: 36px;
+        }
+      `}</style>
+
+      <div className="queue-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="queue-title">Queue</span>
+          {!loading && (
+            <span className="queue-count">{posts.length}</span>
+          )}
         </div>
+        <button
+          className="btn btn-primary trigger-btn"
+          onClick={handleTrigger}
+          disabled={triggering}
+        >
+          {triggering ? '…' : '+ Generate'}
+        </button>
       </div>
 
-      {error && <div style={s.error}>{error}</div>}
+      {loading && <div className="spinner" />}
 
-      {loading ? (
-        <div style={s.loading}>Loading…</div>
-      ) : posts.length === 0 ? (
-        <div style={s.empty}>
-          No posts in queue.<br />
-          <span style={{ fontSize: '13px', color: '#374151' }}>
-            Drafts will appear here after the next content cycle.
-          </span>
+      {error && (
+        <div className="card" style={{ borderColor: 'var(--red)', color: 'var(--red)' }}>
+          {error}
         </div>
-      ) : (
-        posts.map((post) => (
-          <PostCard key={post.id} post={post} onRefresh={load} />
-        ))
       )}
-    </div>
+
+      {!loading && !error && posts.length === 0 && (
+        <div className="empty">
+          <div className="empty-icon">📭</div>
+          <div className="empty-text">Queue is empty</div>
+          <div className="empty-sub">Tap Generate to create a new draft</div>
+        </div>
+      )}
+
+      {posts.map(post => (
+        <PostCard key={post.id} post={post} onRefresh={fetchQueue} />
+      ))}
+
+      {toast && <div className="toast">{toast}</div>}
+    </>
   )
 }
