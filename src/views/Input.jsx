@@ -1,139 +1,109 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { submitInput } from '../api/client.js'
-
-const s = {
-  page: { padding: '16px 16px 100px' },
-  title: { fontSize: '20px', fontWeight: '700', color: '#f0f0f0', marginBottom: '6px' },
-  subtitle: { fontSize: '14px', color: '#6b7280', marginBottom: '20px', lineHeight: '1.5' },
-  textarea: {
-    width: '100%',
-    background: '#161616',
-    border: '1px solid #333',
-    borderRadius: '12px',
-    color: '#e5e7eb',
-    fontSize: '16px',
-    lineHeight: '1.6',
-    padding: '14px',
-    resize: 'vertical',
-    minHeight: '140px',
-    fontFamily: 'inherit',
-    outline: 'none',
-    transition: 'border-color 0.2s',
-  },
-  btnRow: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    marginTop: '12px',
-  },
-  submitBtn: (disabled) => ({
-    background: disabled ? '#1f2937' : '#1e3a5f',
-    color: disabled ? '#4b5563' : '#60a5fa',
-    border: `1px solid ${disabled ? '#374151' : '#1d4ed8'}`,
-    padding: '12px 24px',
-    borderRadius: '10px',
-    fontSize: '15px',
-    fontWeight: '700',
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    minHeight: '44px',
-    transition: 'all 0.2s',
-  }),
-  success: {
-    background: '#064e3b',
-    border: '1px solid #059669',
-    borderRadius: '10px',
-    padding: '14px 16px',
-    color: '#34d399',
-    fontSize: '14px',
-    marginTop: '16px',
-    lineHeight: '1.5',
-  },
-  error: {
-    background: '#4b1111',
-    border: '1px solid #dc2626',
-    borderRadius: '10px',
-    padding: '14px 16px',
-    color: '#f87171',
-    fontSize: '14px',
-    marginTop: '16px',
-  },
-  hint: {
-    marginTop: '24px',
-    background: '#1a1a1a',
-    border: '1px solid #252525',
-    borderRadius: '10px',
-    padding: '14px 16px',
-  },
-  hintTitle: { fontSize: '13px', color: '#9ca3af', fontWeight: '600', marginBottom: '8px' },
-  hintList: { fontSize: '13px', color: '#6b7280', lineHeight: '1.8', paddingLeft: '16px' },
-}
 
 export default function Input() {
   const [text, setText] = useState('')
-  const [submitted, setSubmitted] = useState(false)
-  const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [done, setDone] = useState(false)
 
   const handleSubmit = async () => {
     if (!text.trim()) return
     setLoading(true)
-    setError(null)
     try {
       await submitInput(text.trim())
-      setSubmitted(true)
+      setDone(true)
       setText('')
-      setTimeout(() => setSubmitted(false), 5000)
-    } catch (e) {
-      setError('Failed to save. Check backend connection.')
-      console.error(e)
+      setTimeout(() => setDone(false), 3000)
+    } catch {
+      alert('Failed to save. Is Railway running?')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div style={s.page}>
-      <h1 style={s.title}>What's on your mind?</h1>
-      <p style={s.subtitle}>
-        This becomes Priority 1 content signal — highest weight in the next generation cycle.
-        Also works via Telegram: just send any message to the bot.
-      </p>
+    <>
+      <style>{`
+        .input-header {
+          font-size: 13px;
+          font-weight: 600;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--text3);
+          margin-bottom: 4px;
+          padding-top: 8px;
+        }
+        .input-sub {
+          font-size: 14px;
+          color: var(--text2);
+          margin-bottom: 20px;
+          line-height: 1.5;
+        }
+        .input-area {
+          margin-bottom: 12px;
+        }
+        .input-area textarea {
+          font-size: 16px;
+          min-height: 150px;
+        }
+        .input-hint {
+          font-size: 12px;
+          color: var(--text3);
+          margin-top: 6px;
+        }
+        .input-success {
+          background: #022c22;
+          border: 1px solid var(--green);
+          color: var(--green);
+          border-radius: 8px;
+          padding: 12px 16px;
+          font-size: 14px;
+          font-weight: 500;
+          margin-top: 12px;
+          text-align: center;
+        }
+        .char-count {
+          text-align: right;
+          font-size: 12px;
+          color: var(--text3);
+          font-family: var(--mono);
+          margin-top: 4px;
+        }
+      `}</style>
 
-      <textarea
-        style={s.textarea}
-        placeholder="A thought, a take, something you want to write about…"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        rows={6}
-      />
-
-      <div style={s.btnRow}>
-        <button
-          style={s.submitBtn(!text.trim() || loading)}
-          onClick={handleSubmit}
-          disabled={!text.trim() || loading}
-        >
-          {loading ? 'Saving…' : 'Save Signal'}
-        </button>
+      <div className="input-header">What's on your mind?</div>
+      <div className="input-sub">
+        Share a thought, experience, or topic. It becomes Priority 1 in the next content cycle — your voice, your story.
       </div>
 
-      {submitted && (
-        <div style={s.success}>
-          ✅ Saved as Priority 1 content signal. This will shape the next LinkedIn post.
+      <div className="input-area">
+        <textarea
+          value={text}
+          onChange={e => setText(e.target.value)}
+          placeholder="E.g. I just realised that the hardest part of being a PM isn't saying no — it's explaining why..."
+          maxLength={500}
+          autoFocus
+        />
+        <div className="char-count">{text.length}/500</div>
+        <div className="input-hint">
+          This is saved to your content signals, same as sending a message to @libero_content_manager_bot
+        </div>
+      </div>
+
+      <button
+        className="btn btn-primary"
+        style={{ width: '100%', fontSize: '15px' }}
+        onClick={handleSubmit}
+        disabled={loading || !text.trim()}
+      >
+        {loading ? 'Saving…' : 'Save as content signal'}
+      </button>
+
+      {done && (
+        <div className="input-success">
+          ✓ Saved — this will be used as P1 signal in the next generation cycle
         </div>
       )}
-
-      {error && <div style={s.error}>{error}</div>}
-
-      <div style={s.hint}>
-        <div style={s.hintTitle}>Examples of useful signals</div>
-        <ul style={s.hintList}>
-          <li>A PM lesson from something that happened this week</li>
-          <li>A framework that changed how you think about product</li>
-          <li>Something the NextLeap program taught you</li>
-          <li>A pattern you've noticed in dev-to-PM transitions</li>
-          <li>A contrarian take on something in the PM world</li>
-        </ul>
-      </div>
-    </div>
+    </>
   )
 }
