@@ -10,8 +10,8 @@ const client = axios.create({
 
 // ── Posts ──────────────────────────────────────────────────────────────────
 
-export const getQueue = () => client.get('/posts/queue').then(r => r.data)
-export const getPosted = () => client.get('/posts/posted').then(r => r.data)
+export const getQueue = () => client.get('/posts/queue').then(r => Array.isArray(r.data) ? r.data : (r.data.posts || []))
+export const getPosted = () => client.get('/posts/posted').then(r => Array.isArray(r.data) ? r.data : (r.data.posts || []))
 
 export const approvePost = (id) => client.post(`/posts/${id}/approve`).then(r => r.data)
 export const rejectPost = (id) => client.post(`/posts/${id}/reject`).then(r => r.data)
