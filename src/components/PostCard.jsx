@@ -223,9 +223,16 @@ export default function PostCard({ post, onRefresh }) {
           </button>
         )}
 
-        {post.image_url ? (
+        {post.image_url && post.image_url.startsWith('https://') ? (
+          <img
+            src={post.image_url}
+            alt="Post image"
+            style={{ width: '100%', borderRadius: 8, marginBottom: 10, display: 'block', objectFit: 'cover', maxHeight: 280 }}
+            onError={e => { e.target.style.display = 'none' }}
+          />
+        ) : post.image_url ? (
           <div className="post-no-image" style={{ border: '1px solid var(--green)', color: 'var(--green)' }}>
-            🖼 Image attached
+            🖼 Image attached (refresh after re-uploading)
           </div>
         ) : (
           <div className="post-no-image">
