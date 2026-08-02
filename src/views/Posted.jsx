@@ -21,7 +21,7 @@ export default function Posted() {
 
   useEffect(() => {
     getPosted()
-      .then(data => { setPosts(data); setLoading(false) })
+      .then(data => { setPosts(Array.isArray(data) ? data : []); setLoading(false) })
       .catch(() => { setError('Could not load posted history.'); setLoading(false) })
   }, [])
 
