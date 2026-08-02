@@ -17,7 +17,7 @@ export default function Queue() {
   const fetchQueue = useCallback(async () => {
     try {
       const data = await getQueue()
-      setPosts(data)
+setPosts(Array.isArray(data) ? data : [])
       setError(null)
     } catch {
       setError('Could not load queue. Is Railway running?')
