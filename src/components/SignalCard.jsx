@@ -1,159 +1,157 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 
-const SOURCE_LABELS = {
-  telegram_input: { label: 'Your Idea', color: '#a78bfa' },
-  linkedin_trending: { label: 'Trending', color: '#34d399' },
-  gap_analysis: { label: 'Gap Fill', color: '#fbbf24' },
+const PRIORITY_LABELS = {
+  P1: { label: 'Your Input', color: '#6366f1', bg: '#1e1b4b' },
+  P2: { label: 'Trending + Gap', color: '#10b981', bg: '#022c22' },
+  P3: { label: 'Trending', color: '#f59e0b', bg: '#1c1007' },
+  P_fallback: { label: 'Fallback', color: '#94a3b8', bg: '#1e2d45' },
 }
 
-const styles = {
-  card: {
-    background: '#1e1e2e',
-    border: '1px solid #2a2a3a',
-    borderRadius: '10px',
-    marginTop: '10px',
-    overflow: 'hidden',
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '10px 14px',
-    cursor: 'pointer',
-    minHeight: '44px',
-    width: '100%',
-    background: 'none',
-    border: 'none',
-    color: '#f0f0f0',
-    textAlign: 'left',
-  },
-  left: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  },
-  badge: (color) => ({
-    background: color + '22',
-    color: color,
-    fontSize: '11px',
-    fontWeight: '700',
-    padding: '2px 8px',
-    borderRadius: '20px',
-    letterSpacing: '0.5px',
-  }),
-  title: {
-    fontSize: '13px',
-    color: '#9ca3af',
-  },
-  chevron: (open) => ({
-    fontSize: '10px',
-    color: '#6b7280',
-    transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-    transition: 'transform 0.2s',
-  }),
-  body: {
-    padding: '0 14px 14px',
-    borderTop: '1px solid #2a2a3a',
-  },
-  row: {
-    marginTop: '10px',
-  },
-  rowLabel: {
-    fontSize: '11px',
-    color: '#6b7280',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    marginBottom: '3px',
-  },
-  rowValue: {
-    fontSize: '13px',
-    color: '#d1d5db',
-    lineHeight: '1.4',
-  },
-  tag: {
-    display: 'inline-block',
-    background: '#1f2937',
-    color: '#9ca3af',
-    fontSize: '12px',
-    padding: '2px 8px',
-    borderRadius: '4px',
-    marginRight: '4px',
-    marginBottom: '4px',
-  },
-}
-
-export default function SignalCard({ signal }) {
+export default function SignalCard({ signalCard, priority }) {
   const [open, setOpen] = useState(false)
+  if (!signalCard) return null
 
-  if (!signal || !signal.primary_signal) {
-    return null
-  }
-
-  const src = SOURCE_LABELS[signal.primary_signal] || { label: signal.primary_signal, color: '#60a5fa' }
+  const p = PRIORITY_LABELS[priority] || PRIORITY_LABELS['P3']
+  const trigger = signalCard.trigger || ''
+  const gap = signalCard.gap_filled || ''
+  const trending = signalCard.trending_topics || []
+  const niche = signalCard.niche_match || []
+  const tgInput = signalCard.telegram_input_used || ''
 
   return (
-    <div style={styles.card}>
-      <button style={styles.header} onClick={() => setOpen(!open)}>
-        <div style={styles.left}>
-          <span style={styles.badge(src.color)}>{src.label}</span>
-          <span style={styles.title}>Why this post was generated</span>
-        </div>
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 12 12"
-          fill="none"
-          stroke="#6b7280"
-          strokeWidth="2"
-          strokeLinecap="round"
-          style={styles.chevron(open)}
-        >
-          <polyline points="2 4 6 8 10 4" />
-        </svg>
-      </button>
+    <>
+      <style>{`
+        .signal-wrap {
+          margin-top: 12px;
+          border-radius: 8px;
+          overflow: hidden;
+          border: 1px solid var(--border);
+        }
+        .signal-toggle {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 10px 12px;
+          background: var(--surface2);
+          border: none;
+          cursor: pointer;
+          color: var(--text2);
+          font-size: 13px;
+          font-weight: 600;
+          -webkit-tap-highlight-color: transparent;
+          min-height: 44px;
+        }
+        .signal-toggle-left {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .signal-pill {
+          padding: 2px 8px;
+          border-radius: 99px;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+        }
+        .signal-chevron {
+          transition: transform 0.2s;
+          color: var(--text3);
+        }
+        .signal-chevron.open { transform: rotate(180deg); }
+        .signal-body {
+          padding: 12px;
+          background: var(--surface2);
+          border-top: 1px solid var(--border);
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .signal-row {
+          font-size: 13px;
+          color: var(--text2);
+          line-height: 1.5;
+        }
+        .signal-row strong {
+          color: var(--text3);
+          font-weight: 600;
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          display: block;
+          margin-bottom: 2px;
+        }
+        .signal-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 4px;
+          margin-top: 2px;
+        }
+        .signal-tag {
+          background: var(--border);
+          color: var(--text2);
+          padding: 2px 8px;
+          border-radius: 99px;
+          font-size: 11px;
+        }
+      `}</style>
 
-      {open && (
-        <div style={styles.body}>
-          {signal.trigger && (
-            <div style={styles.row}>
-              <div style={styles.rowLabel}>Trigger</div>
-              <div style={styles.rowValue}>{signal.trigger}</div>
-            </div>
-          )}
-          {signal.telegram_input_used && (
-            <div style={styles.row}>
-              <div style={styles.rowLabel}>Your input used</div>
-              <div style={styles.rowValue}>"{signal.telegram_input_used}"</div>
-            </div>
-          )}
-          {signal.gap_filled && (
-            <div style={styles.row}>
-              <div style={styles.rowLabel}>Gap filled</div>
-              <div style={styles.rowValue}>{signal.gap_filled}</div>
-            </div>
-          )}
-          {signal.trending_topics?.length > 0 && (
-            <div style={styles.row}>
-              <div style={styles.rowLabel}>Trending topics referenced</div>
-              <div>
-                {signal.trending_topics.map((t, i) => (
-                  <span key={i} style={styles.tag}>{t}</span>
-                ))}
+      <div className="signal-wrap">
+        <button className="signal-toggle" onClick={() => setOpen(o => !o)}>
+          <span className="signal-toggle-left">
+            <span className="signal-pill" style={{ background: p.bg, color: p.color }}>
+              {p.label}
+            </span>
+            Signal card
+          </span>
+          <svg className={`signal-chevron${open ? ' open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+
+        {open && (
+          <div className="signal-body">
+            {trigger && (
+              <div className="signal-row">
+                <strong>Trigger</strong>
+                {trigger.replace(/^LinkedIn trending in niche \+ gap: /, '').replace(/^You said: /, '')}
               </div>
-            </div>
-          )}
-          {signal.niche_match?.length > 0 && (
-            <div style={styles.row}>
-              <div style={styles.rowLabel}>Niche match</div>
-              <div>
-                {signal.niche_match.map((t, i) => (
-                  <span key={i} style={styles.tag}>{t}</span>
-                ))}
+            )}
+            {tgInput && (
+              <div className="signal-row">
+                <strong>Your input</strong>
+                {tgInput}
               </div>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+            )}
+            {gap && (
+              <div className="signal-row">
+                <strong>Gap filled</strong>
+                {gap}
+              </div>
+            )}
+            {trending.length > 0 && (
+              <div className="signal-row">
+                <strong>Trending topics</strong>
+                <div className="signal-tags">
+                  {trending.slice(0, 4).map((t, i) => (
+                    <span key={i} className="signal-tag">{t}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+            {niche.length > 0 && (
+              <div className="signal-row">
+                <strong>Niche match</strong>
+                <div className="signal-tags">
+                  {niche.map((n, i) => (
+                    <span key={i} className="signal-tag" style={{ color: p.color }}>{n}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </>
   )
 }
