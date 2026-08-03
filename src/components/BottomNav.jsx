@@ -3,6 +3,7 @@ export default function BottomNav({ active, onChange }) {
     { id: 'queue',    label: 'Queue',    icon: QueueIcon },
     { id: 'posted',   label: 'Posted',   icon: PostedIcon },
     { id: 'input',    label: 'Write',    icon: InputIcon },
+    { id: 'profile',  label: 'Profile',  icon: ProfileIcon },
     { id: 'settings', label: 'System',   icon: SettingsIcon },
   ]
 
@@ -11,14 +12,12 @@ export default function BottomNav({ active, onChange }) {
       <style>{`
         .bottom-nav {
           position: fixed;
-          bottom: 0;
-          left: 0;
-          right: 0;
+          bottom: 0; left: 0; right: 0;
           height: var(--nav-h);
-          background: rgba(11, 17, 32, 0.85);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          border-top: 1px solid rgba(30, 45, 69, 0.8);
+          background: rgba(8, 13, 26, 0.92);
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          border-top: 1px solid rgba(56, 189, 248, 0.1);
           display: flex;
           z-index: 100;
           padding-bottom: env(safe-area-inset-bottom);
@@ -32,7 +31,7 @@ export default function BottomNav({ active, onChange }) {
           gap: 4px;
           border: none;
           background: none;
-          color: var(--text3);
+          color: rgba(56,189,248,0.28);
           cursor: pointer;
           transition: color 0.2s;
           min-height: 44px;
@@ -40,31 +39,34 @@ export default function BottomNav({ active, onChange }) {
           padding: 0;
           position: relative;
         }
-        .nav-tab.active { color: var(--accent2); }
-        .nav-tab svg { width: 22px; height: 22px; transition: transform 0.2s; }
-        .nav-tab.active svg { transform: translateY(-1px); }
+        .nav-tab.active { color: #38bdf8; }
+        .nav-tab svg { width: 20px; height: 20px; transition: transform 0.2s; }
+        .nav-tab.active svg { transform: translateY(-1px); filter: drop-shadow(0 0 4px rgba(56,189,248,0.5)); }
         .nav-label {
-          font-size: 10px;
-          font-weight: 600;
-          letter-spacing: 0.05em;
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
+          font-family: var(--mono);
           transition: color 0.2s;
         }
+
+        /* Electric top bar instead of pill */
         .nav-indicator {
           position: absolute;
-          top: 0;
-          left: 50%;
+          top: 0; left: 50%;
           transform: translateX(-50%);
-          width: 24px;
-          height: 2px;
+          width: 0;
+          height: 1.5px;
           border-radius: 0 0 2px 2px;
-          background: linear-gradient(90deg, var(--accent), var(--purple));
-          transition: opacity 0.2s, width 0.3s;
+          background: #38bdf8;
+          box-shadow: 0 0 8px #38bdf8, 0 0 16px rgba(56,189,248,0.4);
+          transition: width 0.25s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s;
           opacity: 0;
         }
         .nav-tab.active .nav-indicator {
           opacity: 1;
-          width: 32px;
+          width: 28px;
         }
       `}</style>
       <nav className="bottom-nav">
@@ -105,6 +107,14 @@ function InputIcon() {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 20h9"/>
       <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+    </svg>
+  )
+}
+function ProfileIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="8" r="4"/>
+      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
     </svg>
   )
 }
