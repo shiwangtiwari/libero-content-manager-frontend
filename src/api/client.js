@@ -19,8 +19,11 @@ export const getHealth      = () => client.get('/health').then(r => r.data)
 export const runPipelineNow = () => client.post('/run_now').then(r => r.data)
 
 // Profile / About Me
-export const getProfile    = () => client.get('/profile').then(r => r.data)
-export const saveProfile   = (bubbles) => client.post('/profile', { bubbles }).then(r => r.data)
-export const addBubble     = (label, content) => client.post('/profile/bubble', { label, content }).then(r => r.data)
+export const getProfile  = () => client.get('/profile').then(r => r.data)
+export const saveProfile = (bubbles) => client.post('/profile', { bubbles }).then(r => r.data)
+export const addBubble   = (label, content) => client.post('/profile/bubble', { label, content }).then(r => r.data)
+
+// Post content editing
+export const editPost = (id, content) => client.post(`/posts/${id}/edit`, { content }).then(r => r.data)
 
 export default client
