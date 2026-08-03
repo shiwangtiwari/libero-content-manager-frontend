@@ -117,9 +117,11 @@ export default function Queue() {
       {!loading && !error && posts.length === 0 && (
         <BlurFade delay={0.1}>
           <div className="empty">
-            <div className="empty-icon">📭</div>
-            <div className="empty-text">Queue is empty</div>
-            <div className="empty-sub">Tap Generate to create a new draft</div>
+            <div className="empty-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(56,189,248,0.3)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+            </div>
+            <div className="empty-text">[ QUEUE EMPTY ]</div>
+            <div className="empty-sub">Next draft generates automatically<br/>Mon 6:00 AM IST → Tue post<br/>Tue 6:00 AM IST → Wed post<br/>Wed 6:00 AM IST → Thu post</div>
           </div>
         </BlurFade>
       )}
