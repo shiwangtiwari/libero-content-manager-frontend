@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import ManaFlow from '../bits/ManaFlow.jsx'
 import SignalCard from './SignalCard.jsx'
-import { approvePost, rejectPost } from '../api/client.js'
+import { approvePost, rejectPost, editPost } from '../api/client.js'
 
 const STATUS_BADGE = {
   draft:              'badge-draft',
@@ -41,8 +41,25 @@ export default function PostCard({ post, onRefresh }) {
   const [expanded, setExpanded] = useState(false)
   const [loading, setLoading] = useState(null)
   const [toast, setToast] = useState(null)
+  const [editing, setEditing] = useState(false)
+  const [editContent, setEditContent] = useState(content)
+  const [savingEdit, setSavingEdit] = useState(false)
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500) }
+
+  const handleSaveEdit = async () => {
+    if (!editContent.trim()) { showToast('Content cannot be empty'); return }
+    if (editContent.length > 3000) { showToast(`Too long: ${editContent.length}/3000 chars`); return }
+    setSavingEdit(true)
+    try {
+      await editPost(post.id, editContent)
+      showToast('✓ Content saved')
+      setEditing(false)
+      onRefresh()
+    } catch (e) {
+      showToast('✗ Save failed — ' + (e.response?.data?.detail || 'error'))
+    } finally { setSavingEdit(false) }
+  }
 
   const handleApprove = async () => {
     setLoading('approve')
@@ -190,7 +207,23 @@ export default function PostCard({ post, onRefresh }) {
           animation: pulse-ring 2s infinite;
           box-shadow: 0 0 4px #38bdf8;
         }
-      `}</style>
+        .bubble-btn {
+          background: none;
+          border: 1px solid rgba(56,189,248,0.15);
+          color: rgba(56,189,248,0.5);
+          font-family: var(--mono);
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          padding: 5px 12px;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.15s;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .bubble-btn:hover { border-color: rgba(56,189,248,0.4); color: #38bdf8; }
+        .bubble-btn.save { border-color: rgba(56,189,248,0.4); color: #38bdf8; }
+        .bubble-btn.save:hover { background: rgba(56,189,248,0.1); }
+      \`}</style>
 
       <div className="pc-wrap">
         <ManaFlow active={isApproved} pulse={!isApproved}>
@@ -210,11 +243,40 @@ export default function PostCard({ post, onRefresh }) {
               <span className="pc-time">{humanTime(post.scheduled_time || post.posted_time)}</span>
             </div>
 
-            <div className="pc-content">{expanded ? content : preview}</div>
-            {content.length > 200 && (
-              <button className="pc-show-more" onClick={() => setExpanded(e => !e)}>
-                {expanded ? '[ collapse ]' : '[ expand ]'}
-              </button>
+            {editing ? (
+              <>
+                <textarea
+                  value={editContent}
+                  onChange={e => setEditContent(e.target.value)}
+                  style={{
+                    width: '100%', minHeight: 220, background: 'rgba(56,189,248,0.04)',
+                    border: '1px solid rgba(56,189,248,0.3)', borderRadius: 10,
+                    color: 'var(--text)', fontFamily: 'var(--sans)', fontSize: 14,
+                    lineHeight: 1.7, padding: '12px 14px', resize: 'vertical',
+                    outline: 'none', marginBottom: 8,
+                  }}
+                />
+                <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: editContent.length > 3000 ? '#f87171' : 'rgba(56,189,248,0.35)' }}>
+                    {editContent.length}/3000
+                  </span>
+                  <button className="bubble-btn save" onClick={handleSaveEdit} disabled={savingEdit} style={{ marginLeft: 'auto' }}>
+                    {savingEdit ? '···' : 'SAVE'}
+                  </button>
+                  <button className="bubble-btn" onClick={() => { setEditing(false); setEditContent(content) }}>
+                    CANCEL
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="pc-content">{expanded ? content : preview}</div>
+                {content.length > 200 && (
+                  <button className="pc-show-more" onClick={() => setExpanded(e => !e)}>
+                    {expanded ? '[ collapse ]' : '[ expand ]'}
+                  </button>
+                )}
+              </>
             )}
 
             {post.image_url?.startsWith('https://') ? (
@@ -254,6 +316,19 @@ export default function PostCard({ post, onRefresh }) {
 
             <div className="pc-footer">
               <span className="pc-id">SYS:{post.id?.slice(0, 8)?.toUpperCase()}</span>
+              {post.status !== 'posted' && !editing && (
+                <button
+                  onClick={() => { setEditing(true); setEditContent(content) }}
+                  style={{
+                    background: 'none', border: '1px solid rgba(56,189,248,0.15)',
+                    color: 'rgba(56,189,248,0.4)', fontFamily: 'var(--mono)',
+                    fontSize: 10, letterSpacing: '0.08em', padding: '4px 10px',
+                    borderRadius: 6, cursor: 'pointer',
+                  }}
+                >
+                  EDIT
+                </button>
+              )}
             </div>
           </div>
         </ManaFlow>
