@@ -45,6 +45,12 @@ export default function PostCard({ post, onRefresh }) {
   const [editContent, setEditContent] = useState(content)
   const [savingEdit, setSavingEdit] = useState(false)
 
+  // Keep editContent in sync if the post content changes externally
+  // (e.g. after a refresh following a Telegram edit)
+  useEffect(() => {
+    if (!editing) setEditContent(content)
+  }, [content, editing])
+
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2500) }
 
   const handleSaveEdit = async () => {
@@ -314,21 +320,34 @@ export default function PostCard({ post, onRefresh }) {
               </>
             )}
 
-            <div className="pc-footer">
-              <span className="pc-id">SYS:{post.id?.slice(0, 8)?.toUpperCase()}</span>
-              {post.status !== 'posted' && !editing && (
+            {/* Edit trigger row — shown for any non-posted post */}
+            {post.status !== 'posted' && !editing && (
+              <div style={{ marginTop: 10, marginBottom: 2 }}>
                 <button
                   onClick={() => { setEditing(true); setEditContent(content) }}
                   style={{
-                    background: 'none', border: '1px solid rgba(56,189,248,0.15)',
-                    color: 'rgba(56,189,248,0.4)', fontFamily: 'var(--mono)',
-                    fontSize: 10, letterSpacing: '0.08em', padding: '4px 10px',
-                    borderRadius: 6, cursor: 'pointer',
+                    width: '100%',
+                    background: 'rgba(56,189,248,0.04)',
+                    border: '1px solid rgba(56,189,248,0.18)',
+                    color: 'rgba(56,189,248,0.55)',
+                    fontFamily: 'var(--mono)',
+                    fontSize: 11,
+                    letterSpacing: '0.1em',
+                    padding: '8px',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s',
                   }}
+                  onMouseEnter={e => { e.target.style.borderColor = 'rgba(56,189,248,0.4)'; e.target.style.color = '#38bdf8' }}
+                  onMouseLeave={e => { e.target.style.borderColor = 'rgba(56,189,248,0.18)'; e.target.style.color = 'rgba(56,189,248,0.55)' }}
                 >
-                  EDIT
+                  EDIT CONTENT
                 </button>
-              )}
+              </div>
+            )}
+
+            <div className="pc-footer">
+              <span className="pc-id">SYS:{post.id?.slice(0, 8)?.toUpperCase()}</span>
             </div>
           </div>
         </ManaFlow>
