@@ -4,11 +4,12 @@ import PulsingDot from '../bits/PulsingDot.jsx'
 import { getHealth } from '../api/client.js'
 
 const SCHEDULE = [
-  { day: 'Monday',    time: '6:00 AM', role: 'Generate for Tuesday' },
-  { day: 'Tuesday',   time: '8:30 AM', role: 'Post to LinkedIn' },
-  { day: 'Wednesday', time: '6:00 AM', role: 'Generate for Wednesday' },
+  { day: 'Monday',    time: '6:00 AM',  role: 'Generate draft → Tuesday post' },
+  { day: 'Tuesday',   time: '6:00 AM',  role: 'Generate draft → Wednesday post' },
+  { day: 'Tuesday',   time: '8:30 AM',  role: 'Post to LinkedIn' },
+  { day: 'Wednesday', time: '6:00 AM',  role: 'Generate draft → Thursday post' },
   { day: 'Wednesday', time: '12:00 PM', role: 'Post to LinkedIn' },
-  { day: 'Thursday',  time: '9:00 AM', role: 'Post to LinkedIn' },
+  { day: 'Thursday',  time: '9:00 AM',  role: 'Post to LinkedIn' },
 ]
 
 export default function Settings() {
@@ -196,7 +197,7 @@ export default function Settings() {
                 </div>
                 <div className="info-row">
                   <span className="info-key">Phase</span>
-                  <span className="info-val" style={{ color: 'var(--green)' }}>P5 — Dashboard ✓</span>
+                  <span className="info-val" style={{ color: 'var(--green)' }}>P6 — Hardened ✓</span>
                 </div>
               </div>
             </div>
