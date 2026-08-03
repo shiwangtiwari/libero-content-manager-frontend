@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import PostCard from '../components/PostCard.jsx'
+import BlurFade from '../bits/BlurFade.jsx'
 import { getQueue, runPipelineNow } from '../api/client.js'
 
 export default function Queue() {
@@ -9,18 +10,15 @@ export default function Queue() {
   const [triggering, setTriggering] = useState(false)
   const [toast, setToast] = useState(null)
 
-  const showToast = (msg) => {
-    setToast(msg)
-    setTimeout(() => setToast(null), 3000)
-  }
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
   const fetchQueue = useCallback(async () => {
     try {
       const data = await getQueue()
-setPosts(Array.isArray(data) ? data : [])
+      setPosts(Array.isArray(data) ? data : (data?.posts || []))
       setError(null)
     } catch {
-      setError('Could not load queue. Is Railway running?')
+      setError('Could not reach Railway backend.')
     } finally {
       setLoading(false)
     }
@@ -40,73 +38,96 @@ setPosts(Array.isArray(data) ? data : [])
     }
   }
 
+  const pendingCount = posts.filter(p => p.status === 'draft' || p.status === 'pending_reschedule').length
+  const approvedCount = posts.filter(p => p.status === 'approved').length
+
   return (
     <>
       <style>{`
-        .queue-header {
+        .queue-stats {
           display: flex;
-          align-items: center;
-          justify-content: space-between;
+          gap: 10px;
           margin-bottom: 16px;
-          padding-top: 8px;
         }
-        .queue-title {
-          font-size: 13px;
-          font-weight: 600;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: var(--text3);
+        .queue-stat {
+          flex: 1;
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          padding: 12px 14px;
+          text-align: center;
         }
-        .queue-count {
+        .queue-stat-num {
+          font-size: 24px;
+          font-weight: 700;
           font-family: var(--mono);
-          font-size: 12px;
-          color: var(--text3);
-          background: var(--surface2);
-          padding: 2px 8px;
-          border-radius: 99px;
+          line-height: 1;
+          margin-bottom: 4px;
         }
-        .trigger-btn {
-          font-size: 13px;
-          padding: 0 12px;
-          height: 36px;
-          min-height: 36px;
+        .queue-stat-label {
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          color: var(--text3);
+          font-weight: 600;
+        }
+        .generate-btn {
+          font-size: 14px;
+          height: 40px;
+          min-height: 40px;
+          padding: 0 16px;
+          border-radius: 10px;
         }
       `}</style>
 
-      <div className="queue-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span className="queue-title">Queue</span>
-          {!loading && (
-            <span className="queue-count">{posts.length}</span>
-          )}
-        </div>
-        <button
-          className="btn btn-primary trigger-btn"
-          onClick={handleTrigger}
-          disabled={triggering}
-        >
-          {triggering ? '…' : '+ Generate'}
-        </button>
-      </div>
+      {!loading && !error && (
+        <BlurFade delay={0}>
+          <div className="queue-stats">
+            <div className="queue-stat">
+              <div className="queue-stat-num" style={{ color: 'var(--accent2)' }}>{pendingCount}</div>
+              <div className="queue-stat-label">Pending</div>
+            </div>
+            <div className="queue-stat">
+              <div className="queue-stat-num" style={{ color: 'var(--green)' }}>{approvedCount}</div>
+              <div className="queue-stat-label">Approved</div>
+            </div>
+            <div className="queue-stat" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <button
+                className="btn btn-primary generate-btn"
+                onClick={handleTrigger}
+                disabled={triggering}
+              >
+                {triggering ? '…' : '+ Generate'}
+              </button>
+            </div>
+          </div>
+        </BlurFade>
+      )}
 
       {loading && <div className="spinner" />}
 
       {error && (
-        <div className="card" style={{ borderColor: 'var(--red)', color: 'var(--red)' }}>
-          {error}
-        </div>
+        <BlurFade delay={0.1}>
+          <div className="card" style={{ borderColor: 'var(--red)', color: 'var(--red)', fontSize: 14 }}>
+            {error}
+          </div>
+        </BlurFade>
       )}
 
       {!loading && !error && posts.length === 0 && (
-        <div className="empty">
-          <div className="empty-icon">📭</div>
-          <div className="empty-text">Queue is empty</div>
-          <div className="empty-sub">Tap Generate to create a new draft</div>
-        </div>
+        <BlurFade delay={0.1}>
+          <div className="empty">
+            <div className="empty-icon">📭</div>
+            <div className="empty-text">Queue is empty</div>
+            <div className="empty-sub">Tap Generate to create a new draft</div>
+          </div>
+        </BlurFade>
       )}
 
-      {posts.map(post => (
-        <PostCard key={post.id} post={post} onRefresh={fetchQueue} />
+      {posts.map((post, i) => (
+        <BlurFade key={post.id} delay={0.05 + i * 0.07}>
+          <PostCard post={post} onRefresh={fetchQueue} />
+        </BlurFade>
       ))}
 
       {toast && <div className="toast">{toast}</div>}
