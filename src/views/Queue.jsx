@@ -23,8 +23,13 @@ export default function Queue() {
           setError(null)
         }
       })
-      .catch(() => {
-        if (!cancelled) setError('Railway is waking up — tap Retry in 10 seconds.')
+      .catch((err) => {
+        if (!cancelled) {
+          const msg = err?.response?.status
+            ? `Error ${err.response.status}: ${err.response.statusText}`
+            : err?.message || 'Network error'
+          setError(`Failed to load queue: ${msg}`)
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
