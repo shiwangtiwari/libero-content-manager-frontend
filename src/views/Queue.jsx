@@ -9,22 +9,34 @@ export default function Queue() {
   const [error, setError] = useState(null)
   const [triggering, setTriggering] = useState(false)
   const [toast, setToast] = useState(null)
+  const [retryCount, setRetryCount] = useState(0)
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
-  const fetchQueue = useCallback(async () => {
-    try {
-      const data = await getQueue()
-      setPosts(Array.isArray(data) ? data : (data?.posts || []))
-      setError(null)
-    } catch {
-      setError('Could not reach Railway backend.')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    getQueue()
+      .then(data => {
+        if (!cancelled) {
+          setPosts(Array.isArray(data) ? data : (data?.posts || []))
+          setError(null)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setError('Railway is waking up — tap Retry in 10 seconds.')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [retryCount])
 
-  useEffect(() => { fetchQueue() }, [fetchQueue])
+  const fetchQueue = () => {
+    setError(null)
+    setLoading(true)
+    setRetryCount(c => c + 1)
+  }
 
   const handleTrigger = async () => {
     setTriggering(true)
@@ -108,18 +120,8 @@ export default function Queue() {
 
       {error && (
         <BlurFade delay={0.1}>
-          <div className="card" style={{ borderColor: 'var(--red)', color: 'var(--red)', fontSize: 14, textAlign: 'center' }}>
-            <p style={{ margin: '0 0 0.8rem 0' }}>{error}</p>
-            <button
-              onClick={() => { setLoading(true); setError(null); fetchQueue() }}
-              style={{
-                padding: '0.5rem 1.2rem', background: 'var(--accent)', color: '#000',
-                border: 'none', borderRadius: '8px', fontWeight: 700,
-                cursor: 'pointer', fontSize: '0.9rem'
-              }}
-            >
-              Retry
-            </button>
+          <div className="card" style={{ borderColor: 'var(--red)', color: 'var(--red)', fontSize: 14 }}>
+            {error}
           </div>
         </BlurFade>
       )}
