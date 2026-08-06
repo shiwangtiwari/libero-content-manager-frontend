@@ -108,8 +108,18 @@ export default function Queue() {
 
       {error && (
         <BlurFade delay={0.1}>
-          <div className="card" style={{ borderColor: 'var(--red)', color: 'var(--red)', fontSize: 14 }}>
-            {error}
+          <div className="card" style={{ borderColor: 'var(--red)', color: 'var(--red)', fontSize: 14, textAlign: 'center' }}>
+            <p style={{ margin: '0 0 0.8rem 0' }}>{error}</p>
+            <button
+              onClick={() => { setLoading(true); setError(null); fetchQueue() }}
+              style={{
+                padding: '0.5rem 1.2rem', background: 'var(--accent)', color: '#000',
+                border: 'none', borderRadius: '8px', fontWeight: 700,
+                cursor: 'pointer', fontSize: '0.9rem'
+              }}
+            >
+              Retry
+            </button>
           </div>
         </BlurFade>
       )}
