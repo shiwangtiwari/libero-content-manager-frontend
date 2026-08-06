@@ -1,24 +1,29 @@
 import axios from 'axios'
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://libero-content-manager-backend-production.up.railway.app'
+// Use /api proxy (Vercel proxies to Railway server-side — no CORS on mobile)
+// Falls back to direct URL for localhost dev
+const API_URL = import.meta.env.VITE_API_URL ||
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? 'https://libero-content-manager-backend-production.up.railway.app'
+    : '/api')
 
 const client = axios.create({
   baseURL: API_URL,
-  timeout: 60000,  // 60s — Railway cold starts can take 20-30s
+  timeout: 60000,
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Auto-retry once on timeout or network error (handles Railway cold starts)
+// Auto-retry once on timeout or network error
 client.interceptors.response.use(
   response => response,
   async error => {
     const config = error.config
     if (!config || config._retried) return Promise.reject(error)
-    const isTimeout = error.code === 'ECONNABORTED' || error.message?.includes('timeout')
+    const isTimeout = error.code === 'ECONNABORTED' || (error.message && error.message.includes('timeout'))
     const isNetwork = !error.response
-    if ((isTimeout || isNetwork) && !config._retried) {
+    if (isTimeout || isNetwork) {
       config._retried = true
-      await new Promise(r => setTimeout(r, 3000)) // wait 3s then retry
+      await new Promise(r => setTimeout(r, 3000))
       return client(config)
     }
     return Promise.reject(error)
