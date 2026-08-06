@@ -4,9 +4,26 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://libero-content-manager-
 
 const client = axios.create({
   baseURL: API_URL,
-  timeout: 30000,
+  timeout: 60000,  // 60s — Railway cold starts can take 20-30s
   headers: { 'Content-Type': 'application/json' },
 })
+
+// Auto-retry once on timeout or network error (handles Railway cold starts)
+client.interceptors.response.use(
+  response => response,
+  async error => {
+    const config = error.config
+    if (!config || config._retried) return Promise.reject(error)
+    const isTimeout = error.code === 'ECONNABORTED' || error.message?.includes('timeout')
+    const isNetwork = !error.response
+    if ((isTimeout || isNetwork) && !config._retried) {
+      config._retried = true
+      await new Promise(r => setTimeout(r, 3000)) // wait 3s then retry
+      return client(config)
+    }
+    return Promise.reject(error)
+  }
+)
 
 export const getQueue   = () => client.get('/posts/queue').then(r => Array.isArray(r.data) ? r.data : (r.data?.posts || []))
 export const getPosted  = () => client.get('/posts/posted').then(r => Array.isArray(r.data) ? r.data : (r.data?.posts || []))
